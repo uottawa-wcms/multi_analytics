@@ -1,0 +1,72 @@
+<?php
+
+  function multi_analytics_menu() {
+    $items = array();
+    $items['admin/config/system/multianalytics'] = array(
+      'title' => 'Google Analytics, Multiple',
+      'description' => 'Configure multiple Google Analytics codes',
+      'page callback' => 'multi_analytics_admin_list',
+      'access arguments' => array('administer google analytics'),
+      'type' => MENU_NORMAL_ITEM,
+      'file' => 'multi_analytics.admin.inc',
+    );
+    $items['admin/config/system/multianalytics/create'] = array(
+      'title' => 'New Tracking Code',
+      'description' => 'Add a new tracking code',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('multi_analytics_admin_settings_form'),
+      'access arguments' => array('administer google analytics'),
+      'type' => MENU_LOCAL_ACTION,
+      'file' => 'multi_analytics.admin.inc',
+    );
+    $items['admin/config/system/multianalytics/%multi_analytics_ua'] = array(
+      'title' => 'Edit Tracking Code',
+      'description' => 'Edit a tracking code',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('multi_analytics_admin_settings_form', 4),
+      'access arguments' => array('administer google analytics'),
+      'type' => MENU_CALLBACK,
+      'file' => 'multi_analytics.admin.inc',
+    );
+    $items['admin/config/system/multianalytics/%multi_analytics_ua/delete'] = array(
+      'title' => 'Edit Tracking Code',
+      'description' => 'Edit a tracking code',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('multi_analytics_delete_settings_form', 4),
+      'access arguments' => array('administer google analytics'),
+      'type' => MENU_CALLBACK,
+      'file' => 'multi_analytics.admin.inc',
+    );
+    return $items;
+  }
+
+  function multi_analytics_ua_load($ua_code) {
+    $rs = db_query('SELECT * FROM {multi_analytics_uas} WHERE ua_code = :code', array(
+      ':code' => $ua_code
+    ));
+    if ($rs->rowCount()) {
+      $ua_entry = $rs->fetchAssoc();
+      $ua_entry['ua_values'] = unserialize($ua_entry['ua_values']);
+      return $ua_entry;
+    }
+    return FALSE;
+  }
+
+  function multi_analytics_page_alter(&$page) {
+    // we alter conf directly so that the new variables do not get
+    // saved to the database, and overwrite the original profile.
+    global $conf;
+    $rs = db_query('SELECT * FROM {multi_analytics_uas}');
+    foreach ($rs as $row) {
+      $values = unserialize($row->ua_values);
+      $originals = array();
+      foreach ($values as $key => $value) {
+        $originals[$key] = isset($conf[$key]) ? $conf[$key] : NULL;
+        $conf[$key] = $value;
+      }
+      googleanalytics_page_alter($page);
+      foreach ($originals as $key => $value) {
+        $conf[$key] = $value;
+      }
+    }
+  }

@@ -1,0 +1,21 @@
+<?php
+
+function multi_analytics_schema() {
+  return array(
+    'multi_analytics_uas' => array(
+      'fields' => array(
+        'ua_code' => array(
+          'type' => 'char',
+          'length' => 13,
+          'not null' => TRUE,
+        ),
+        'ua_values' => array(
+          'type' => 'blob',
+          'size' => 'big',
+          'serialize' => TRUE,
+        ),
+      ),
+      'primary key' => array('ua_code'),
+    )
+  );
+}

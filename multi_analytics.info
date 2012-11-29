@@ -1,0 +1,8 @@
+name = Multi-Analytics
+description = "Allows the use of multiple Google Analytics codes with different
+settings."
+core = 7.x
+
+package = Statistics
+
+dependencies[] = googleanalytics
